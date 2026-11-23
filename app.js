@@ -3,6 +3,7 @@
 "use strict";
 
 const STORE_KEY = "contentops.v1";
+const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 const PLATFORMS = {
   instagram: { label:"Instagram", times:["11:00","19:00"], tagCount:12, charLimit:2200 },
@@ -10,10 +11,6 @@ const PLATFORMS = {
   tiktok:    { label:"TikTok",    times:["15:00","21:00"], tagCount:5,  charLimit:150 },
   shorts:    { label:"YouTube Shorts", times:["13:00","18:00"], tagCount:4, charLimit:100 },
   x:         { label:"X / Twitter", times:["09:00","17:00"], tagCount:3, charLimit:280 }
-};
-const PF_COLORS = {
-  instagram:"var(--pf-instagram)", linkedin:"var(--pf-linkedin)", tiktok:"var(--pf-tiktok)",
-  shorts:"var(--pf-shorts)", x:"var(--pf-x)"
 };
 
 const STOP = new Set(("a an the and or but if then than so of to in on for with at by from as is are was were be been being this that these those it its your you we our their they he she his her not no do does did done can could should would will won't about into over under more most some any all each very just also how why what when where which who whom while during before after again further once here there own same too only other such own".split(" ")));
@@ -71,7 +68,8 @@ function topicSlug(topic){
 }
 function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
 function fmtDate(iso){const d=new Date(iso+"T00:00:00");return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});}
-function todayIso(){const n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");}
+function localISO(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;}
+function weekdayKey(iso){const d=new Date(iso+"T00:00:00");return (d.getDay()+6)%7;} // 0=Mon..6=Sun
 
 /* ---------- state ---------- */
 let _uid=Date.now()%100000; function uid(){return "c"+(_uid++).toString(36)+Math.floor(Math.random()*1e4).toString(36);}
@@ -149,20 +147,12 @@ function generateScripts(text){
 
 /* ---------- rendering ---------- */
 function switchView(name){
-  const tabs=[...document.querySelectorAll(".tab")];
-  tabs.forEach(t=>{
-    const on=t.dataset.view===name;
-    t.classList.toggle("active",on);
-    if(on)t.setAttribute("aria-current","page");else t.removeAttribute("aria-current");
-  });
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===name));
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+name));
-  keepActiveTabVisible();
+  const activeTab=document.querySelector(`.tab[data-view="${name}"]`);
+  if(activeTab)activeTab.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
   if(name==="board")renderBoard();
   if(name==="calendar")renderCalendar();
-}
-function keepActiveTabVisible(){
-  const active=document.querySelector(".tab.active");
-  if(active)active.scrollIntoView({block:"nearest",inline:"nearest"});
 }
 
 function renderBoard(){
@@ -170,10 +160,10 @@ function renderBoard(){
   const cols=[["idea","Ideas"],["drafting","Drafting"],["ready","Ready to post"],["posted","Posted"]];
   board.innerHTML=cols.map(([key,label])=>{
     const cards=state.cards.filter(c=>c.status===key);
-    return `<div class="col" data-stage="${key}"><div class="col-head"><h3>${label}</h3><span class="count">${cards.length}</span></div>`+
-      (cards.length?cards.map(cardHTML).join(""):`<div class="empty"><span class="empty-icon" aria-hidden="true">＋</span>Nothing here yet</div>`)+`</div>`;
+    return `<div class="col"><h3>${label}<span class="count">${cards.length}</span></h3>`+
+      (cards.length?cards.map(cardHTML).join(""):`<div class="col-empty">No cards here</div>`)+`</div>`;
   }).join("");
-  board.querySelectorAll("select[data-id]").forEach(sel=>sel.addEventListener("change",e=>{
+  board.querySelectorAll("select[data-id]").forEach(sel=>sel.addEventListener("change",()=>{
     const card=state.cards.find(c=>c.id===sel.dataset.id);
     if(card){card.status=sel.value;saveState();renderBoard();}
   }));
@@ -182,30 +172,29 @@ function renderBoard(){
   }));
 }
 function cardHTML(c){
-  const pf=PLATFORMS[c.platform];
-  const label=pf?pf.label:c.platform;
-  const color=PF_COLORS[c.platform]||"var(--muted)";
   const options=Object.entries({idea:"Idea",drafting:"Drafting",ready:"Ready to post",posted:"Posted"})
     .map(([k,v])=>`<option value="${k}" ${c.status===k?"selected":""}>${v}</option>`).join("");
-  return `<div class="kcard"><div class="t">${esc(c.title)}</div>`+
-    (c.notes?`<div class="notes">${esc(c.notes)}</div>`:"")+
-    `<div class="meta"><span class="pf"><span class="dot" style="background:${color}"></span>${label}</span>`+
-    `<select data-id="${c.id}" aria-label="Move card to another stage">${options}</select>`+
-    `<button class="del" data-id="${c.id}" title="Delete card" aria-label="Delete card">×</button></div></div>`;
+  const pf=PLATFORMS[c.platform]?PLATFORMS[c.platform].label:c.platform;
+  return `<div class="kcard">
+    <div class="kcard-top"><span class="pf-chip">${esc(pf)}</span><button class="del" data-id="${c.id}" title="Delete card" aria-label="Delete card">×</button></div>
+    <div class="t">${esc(c.title)}</div>
+    ${c.notes?`<div class="kcard-notes">${esc(c.notes)}</div>`:""}
+    <div class="kcard-status"><select data-id="${c.id}" aria-label="Status">${options}</select></div>
+  </div>`;
 }
 
 function renderPlan(){
   const out=document.getElementById("plan-output");
   if(!state.plan){out.innerHTML="";return;}
   const p=state.plan;
-  out.innerHTML=`<div class="row-between plan-summary"><strong>Week of ${fmtDate(p.startDate)}</strong><span class="pill">topic: ${esc(p.topic)}</span></div>`+
+  out.innerHTML=`<div class="row-between plan-head"><strong>Week of ${fmtDate(p.startDate)}</strong><span class="pill">topic: ${esc(p.topic)}</span></div>`+
     p.days.map((e,i)=>`
       <div class="plan-day" data-i="${i}">
         <div class="head"><span class="d">${fmtDate(e.date)}</span><span class="pill">${e.platform} · post at ${e.time}</span></div>
         <div class="hookline">${esc(e.hook)}</div>
         <div class="caption">${esc(e.caption)}</div>
         <div class="tagline">${e.hashtags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
-        <div class="foot"><span class="sub">${esc(e.cta)}</span>
+        <div class="foot"><span class="cta-text">${esc(e.cta)}</span>
           <button class="btn ai-btn" data-i="${i}" ${aiAvailable()?"":"disabled title=\"Add an API key in Export & AI first\""}>Rewrite with AI</button>
           <button class="btn copy-btn" data-i="${i}">Copy caption</button></div>
         <p class="note ai-note" data-i="${i}"></p>
@@ -226,31 +215,30 @@ function renderPlan(){
 function renderCalendar(){
   const grid=document.getElementById("week-grid");
   if(!state.plan){
-    grid.innerHTML=`<div class="cal-empty"><span class="empty-icon" aria-hidden="true">▦</span>`+
-      `<p><strong>No plan yet.</strong></p>`+
-      `<p class="hint">Generate a week plan and it shows up here, day by day.</p>`+
-      `<button class="btn primary" id="cal-generate">Generate a week plan</button></div>`;
+    grid.innerHTML=`<div class="cal-empty">No plan yet.<button class="btn mini" id="cal-go-planner">Go to Planner</button></div>`;
+    const go=document.getElementById("cal-go-planner");
+    if(go)go.addEventListener("click",()=>switchView("planner"));
     return;
   }
-  const p=state.plan;
-  const byDate={};
-  p.days.forEach(e=>{(byDate[e.date]=byDate[e.date]||[]).push(e);});
-  const dates=Object.keys(byDate).sort();
-  const todayIsoDate=todayIso();
-  grid.innerHTML=`<div class="cal-head"><strong>Week of ${fmtDate(p.startDate)}</strong><span class="pill">topic: ${esc(p.topic)}</span></div>`+
-    `<div class="days">`+dates.map(iso=>{
-      const d=new Date(iso+"T00:00:00");
-      const name=d.toLocaleDateString(undefined,{weekday:"short"});
-      const dateLabel=d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
-      const isToday=iso===todayIsoDate;
-      const entries=byDate[iso].map(e=>`<div class="entry">`+
-        `<div class="line"><span class="pf">${e.platform}</span><span class="tm">${e.time}</span></div>`+
-        `<div class="hook">${esc(e.hook)}</div></div>`).join("");
-      return `<div class="day-row${isToday?" today":""}">`+
-        `<div class="day-when"><span class="day-name">${name}</span><span class="day-date">${dateLabel}</span>`+
-        (isToday?`<span class="today-flag">Today</span>`:"")+`</div>`+
-        `<div class="day-entries">${entries||`<div class="day-empty">No posts scheduled</div>`}</div></div>`;
-    }).join("")+`</div>`;
+  const todayISO=localISO(new Date());
+  const byDay=[[],[],[],[],[],[],[]];
+  state.plan.days.forEach(e=>{byDay[weekdayKey(e.date)].push(e);});
+  grid.innerHTML=DAY_NAMES.map((d,idx)=>{
+    const entries=byDay[idx];
+    const firstDate=entries.length?entries[0].date:"";
+    const isToday=firstDate===todayISO;
+    const dateLabel=firstDate?new Date(firstDate+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
+    return `<div class="day${isToday?" today":""}">
+      <div class="day-label">
+        <span class="day-name">${d}</span>
+        ${dateLabel?`<span class="day-date">${dateLabel}</span>`:""}
+        ${isToday?`<span class="today-flag">Today</span>`:""}
+      </div>
+      <div class="day-entries">
+        ${entries.length?entries.map(e=>`<div class="entry"><span class="pf">${esc(e.platform)}</span><span class="tm">${e.time}</span><span class="entry-hook">${esc(e.hook)}</span></div>`).join(""):`<div class="empty-row">No post scheduled</div>`}
+      </div>
+    </div>`;
+  }).join("");
 }
 
 function renderRepurpose(result){
@@ -286,9 +274,6 @@ function download(filename,text){
 /* ---------- wiring ---------- */
 document.getElementById("tabs").addEventListener("click",e=>{
   const t=e.target.closest(".tab");if(t)switchView(t.dataset.view);
-});
-document.getElementById("week-grid").addEventListener("click",e=>{
-  if(e.target.closest("#cal-generate"))switchView("planner");
 });
 document.getElementById("plan-form").addEventListener("submit",e=>{
   e.preventDefault();
@@ -335,7 +320,6 @@ document.getElementById("export-md").addEventListener("click",()=>{
   const ws=document.getElementById("week-start");
   const today=new Date();const day=(today.getDay()+6)%7; // Monday start
   today.setDate(today.getDate()-day);
-  ws.value=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+  ws.value=localISO(today);
   renderPlan();renderBoard();
-  requestAnimationFrame(keepActiveTabVisible);
 })();

@@ -14,7 +14,7 @@
 <header class="topbar">
   <div class="brand"><span class="logo">◈</span> content-ops</div>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <button class="tab active" data-view="planner" aria-current="page">Planner</button>
+    <button class="tab active" data-view="planner">Planner</button>
     <button class="tab" data-view="board">Board</button>
     <button class="tab" data-view="calendar">Calendar</button>
     <button class="tab" data-view="repurpose">Repurpose</button>
@@ -27,31 +27,26 @@
   <section class="view active" id="view-planner">
     <h1>Plan a week of content</h1>
     <p class="sub">One topic in, a seven-day posting plan out: hooks, captions, hashtags, CTAs and posting times, matched to each platform.</p>
-    <form id="plan-form" class="card plan-form">
-      <div class="field">
-        <label class="label" for="topic"><span class="step">1</span> Main topic</label>
-        <input type="text" id="topic" placeholder="e.g. Canva editing tricks for short videos" required autocomplete="off">
-        <p class="hint">Pick one topic — the generator turns it into a full week of posts.</p>
-      </div>
-      <div class="plan-form-row">
-        <div class="field">
-          <label class="label" for="week-start"><span class="step">2</span> Week starts</label>
+    <form id="plan-form" class="card form-grid">
+      <div class="form-fields">
+        <label>Main topic
+          <input type="text" id="topic" placeholder="e.g. Canva editing tricks for short videos" required>
+        </label>
+        <label>Week starts
           <input type="date" id="week-start" required>
-        </div>
+        </label>
         <fieldset class="platform-picker">
-          <legend class="label"><span class="step">3</span> Platforms</legend>
-          <div class="chips">
-            <label class="chip"><input type="checkbox" value="instagram" checked> Instagram</label>
-            <label class="chip"><input type="checkbox" value="linkedin" checked> LinkedIn</label>
-            <label class="chip"><input type="checkbox" value="tiktok"> TikTok</label>
-            <label class="chip"><input type="checkbox" value="shorts"> YouTube Shorts</label>
-            <label class="chip"><input type="checkbox" value="x"> X / Twitter</label>
-          </div>
+          <legend>Platforms</legend>
+          <label class="chip"><input type="checkbox" value="instagram" checked> Instagram</label>
+          <label class="chip"><input type="checkbox" value="linkedin" checked> LinkedIn</label>
+          <label class="chip"><input type="checkbox" value="tiktok"> TikTok</label>
+          <label class="chip"><input type="checkbox" value="shorts"> YouTube Shorts</label>
+          <label class="chip"><input type="checkbox" value="x"> X / Twitter</label>
         </fieldset>
       </div>
-      <div class="plan-cta">
-        <button type="submit" class="btn primary btn-lg">Generate week plan <span class="arrow" aria-hidden="true">→</span></button>
-        <p class="hint">Free · runs offline in your browser · no sign-up</p>
+      <div class="form-actions">
+        <button type="submit" class="btn primary btn-block btn-lg">Generate week plan →</button>
+        <p class="form-hint">Builds a 7-day plan from your topic. Runs offline, no sign-up.</p>
       </div>
     </form>
     <div id="plan-output"></div>
@@ -61,7 +56,7 @@
   <section class="view" id="view-board">
     <div class="row-between">
       <h1>Content board</h1>
-      <button class="btn" id="add-card"><span aria-hidden="true">＋</span> Add idea</button>
+      <button class="btn" id="add-card">Add idea</button>
     </div>
     <p class="sub">Every post moves through four stages. Move a card with the dropdown on it.</p>
     <div class="board" id="board"></div>
@@ -71,16 +66,18 @@
   <section class="view" id="view-calendar">
     <h1>This week</h1>
     <p class="sub">The plan you generated, laid out day by day. Posting times are per-platform presets.</p>
-    <div id="week-grid"></div>
+    <div class="week-grid" id="week-grid"></div>
   </section>
 
   <!-- REPURPOSE -->
   <section class="view" id="view-repurpose">
     <h1>Repurpose long content</h1>
     <p class="sub">Paste an article, blog post or script. Get three short-video scripts and a five-slide carousel outline from it.</p>
-    <div class="repurpose-form">
+    <div class="card repurpose-card">
       <textarea id="source-text" rows="9" placeholder="Paste your long-form text here…"></textarea>
-      <button class="btn primary" id="repurpose-btn">Extract shorts + carousel</button>
+      <div class="card-actions">
+        <button class="btn primary" id="repurpose-btn">Extract shorts + carousel</button>
+      </div>
     </div>
     <div id="repurpose-output"></div>
   </section>
@@ -88,7 +85,7 @@
   <!-- SETTINGS -->
   <section class="view" id="view-settings">
     <h1>Export &amp; AI settings</h1>
-    <div class="stack">
+    <div class="card-stack">
       <div class="card">
         <h2>Backup</h2>
         <p class="sub">Everything lives in your browser. Take a JSON backup before clearing site data.</p>
@@ -101,24 +98,21 @@
       <div class="card">
         <h2>Optional AI polish</h2>
         <p class="sub">The planner works fully offline with its built-in generator. If you want AI-rewritten captions, add an OpenAI-compatible API key. It is stored only in this browser and calls go straight from your browser to the provider.</p>
-        <div class="field-grid">
-          <div class="field">
-            <label class="label" for="ai-base">API base URL</label>
-            <input type="text" id="ai-base" placeholder="https://api.openai.com/v1" autocomplete="off">
-          </div>
-          <div class="field">
-            <label class="label" for="ai-key">API key</label>
+        <div class="settings-grid">
+          <label>API base URL
+            <input type="text" id="ai-base" placeholder="https://api.openai.com/v1">
+          </label>
+          <label>API key
             <input type="password" id="ai-key" placeholder="sk-…">
-          </div>
-          <div class="field">
-            <label class="label" for="ai-model">Model</label>
-            <input type="text" id="ai-model" placeholder="gpt-4o-mini" autocomplete="off">
-          </div>
+          </label>
+          <label>Model
+            <input type="text" id="ai-model" placeholder="gpt-4o-mini">
+          </label>
         </div>
-        <div class="btn-row settings-actions">
+        <div class="card-actions">
           <button class="btn" id="save-ai">Save AI settings</button>
+          <p id="ai-status" class="sub" style="margin:0"></p>
         </div>
-        <p id="ai-status" class="hint"></p>
       </div>
       <div class="card">
         <h2>Content calendar (.md)</h2>
