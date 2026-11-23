@@ -29,10 +29,10 @@
     <p class="sub">One topic in, a seven-day posting plan out: hooks, captions, hashtags, CTAs and posting times, matched to each platform.</p>
     <form id="plan-form" class="card form-grid">
       <div class="form-fields">
-        <label>Main topic
+        <label class="topic-field">Main topic
           <input type="text" id="topic" placeholder="e.g. Canva editing tricks for short videos" required>
         </label>
-        <label>Week starts
+        <label class="date-field">Week starts
           <input type="date" id="week-start" required>
         </label>
         <fieldset class="platform-picker">
@@ -45,7 +45,7 @@
         </fieldset>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn primary btn-block btn-lg">Generate week plan →</button>
+        <button type="submit" class="btn primary btn-block btn-lg generate-btn"><span>Generate week plan</span><span aria-hidden="true">→</span></button>
         <p class="form-hint">Builds a 7-day plan from your topic. Runs offline, no sign-up.</p>
       </div>
     </form>
@@ -111,7 +111,7 @@
         </div>
         <div class="card-actions">
           <button class="btn" id="save-ai">Save AI settings</button>
-          <p id="ai-status" class="sub" style="margin:0"></p>
+          <p id="ai-status" class="sub ai-status"></p>
         </div>
       </div>
       <div class="card">
