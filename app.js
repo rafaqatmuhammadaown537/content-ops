@@ -161,7 +161,7 @@ function renderBoard(){
   board.innerHTML=cols.map(([key,label])=>{
     const cards=state.cards.filter(c=>c.status===key);
     return `<div class="col"><h3>${label}<span class="count">${cards.length}</span></h3>`+
-      (cards.length?cards.map(cardHTML).join(""):`<div class="col-empty">No cards here</div>`)+`</div>`;
+      (cards.length?cards.map(cardHTML).join(""):`<div class="col-empty">Nothing here yet</div>`)+`</div>`;
   }).join("");
   board.querySelectorAll("select[data-id]").forEach(sel=>sel.addEventListener("change",()=>{
     const card=state.cards.find(c=>c.id===sel.dataset.id);
@@ -179,7 +179,7 @@ function cardHTML(c){
     <div class="kcard-top"><span class="pf-chip">${esc(pf)}</span><button class="del" data-id="${c.id}" title="Delete card" aria-label="Delete card">×</button></div>
     <div class="t">${esc(c.title)}</div>
     ${c.notes?`<div class="kcard-notes">${esc(c.notes)}</div>`:""}
-    <div class="kcard-status"><select data-id="${c.id}" aria-label="Status">${options}</select></div>
+    <div class="kcard-status"><select data-id="${c.id}" aria-label="Move ${esc(c.title)} to another stage">${options}</select></div>
   </div>`;
 }
 
@@ -235,7 +235,7 @@ function renderCalendar(){
         ${isToday?`<span class="today-flag">Today</span>`:""}
       </div>
       <div class="day-entries">
-        ${entries.length?entries.map(e=>`<div class="entry"><span class="pf">${esc(e.platform)}</span><span class="tm">${e.time}</span><span class="entry-hook">${esc(e.hook)}</span></div>`).join(""):`<div class="empty-row">No post scheduled</div>`}
+        ${entries.length?entries.map(e=>`<div class="entry"><span class="pf">${esc(e.platform)}</span><span class="tm">${e.time}</span><span class="entry-hook">${esc(e.hook)}</span></div>`).join(""):`<div class="empty-row">Nothing planned for this day yet</div>`}
       </div>
     </div>`;
   }).join("");
