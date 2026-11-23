@@ -70,6 +70,7 @@ function esc(s){const d=document.createElement("div");d.textContent=s;return d.i
 function fmtDate(iso){const d=new Date(iso+"T00:00:00");return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});}
 
 /* ---------- state ---------- */
+let _uid=Date.now()%100000; function uid(){return "c"+(_uid++).toString(36)+Math.floor(Math.random()*1e4).toString(36);}
 let state = loadState();
 function loadState(){
   try{const raw=localStorage.getItem(STORE_KEY);if(raw)return JSON.parse(raw);}catch(e){}
@@ -83,7 +84,6 @@ function sampleCards(){
     {id:uid(),title:"Short: one formula, three hooks",platform:"shorts",status:"ready",notes:"",date:""}
   ];
 }
-let _uid=Date.now()%100000; function uid(){return "c"+(_uid++).toString(36)+Math.floor(Math.random()*1e4).toString(36);}
 
 /* ---------- planner ---------- */
 function generatePlan(topic,platforms,startDate){
